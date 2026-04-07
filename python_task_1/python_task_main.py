@@ -2,9 +2,11 @@ import sys
 import os
 from pathlib import Path
 import shutil
+import cyrtranslit
 
 def normalize(inStr):
-    return inStr
+    returnStr = cyrtranslit.to_latin(inStr,"ua")
+    return returnStr
 
 def sort_file(inFileName,inFolder):
     l_image = ['JPEG', 'PNG', 'JPG', 'SVG']
