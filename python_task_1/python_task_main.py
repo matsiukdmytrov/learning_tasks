@@ -4,12 +4,14 @@ import sys
 #import stat
 from pathlib import Path
 import shutil
-import cyrtranslit
+#import cyrtranslit
 
 other_folder = ""
 
-def normalize(in_str):
-    return_sr_start = cyrtranslit.to_latin(in_str,"ua")
+def normalize(in_str="",in_trans_table=[]):
+    #return_sr_start = cyrtranslit.to_latin(in_str,"ua")
+
+    return_sr_start = in_str.translate(in_trans_table)
     return_str = ""
     for locSymb in return_sr_start:
         if locSymb in string.ascii_letters:
@@ -20,6 +22,21 @@ def normalize(in_str):
             return_str = return_str + "_"
 
     return return_str
+
+def normalize_names_in_folders(in_folder,trans_table):
+    for internal_object in in_folder.iterdir():
+        if internal_object.is_dir():
+            normalize_names_in_folders(internal_object,trans_table)
+            short_file_name = internal_object.name
+            short_file_name = normalize(short_file_name, trans_table)
+            new_file = internal_object.with_name(short_file_name)
+            internal_object.rename(new_file)
+        else:
+            short_file_name = internal_object.stem
+            short_file_name = normalize(short_file_name,trans_table)
+            new_file = internal_object.with_name(short_file_name+internal_object.suffix)
+            internal_object.rename(new_file)
+    return 0
 
 def sort_files(in_folder,file_extension_dict={}):
     for fn in file_extension_dict:
@@ -87,7 +104,23 @@ def main():
 
     other_folder  = litter_folder + "\\other"
     litter_folder_path = Path(litter_folder)
-    sort_folders(litter_folder_path,file_extension_dict)
+    #sort_folders(litter_folder_path,file_extension_dict)
+
+    trans_dict = {
+        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'h', 'ґ': 'g', 'д': 'd', 'е': 'e', 'є': 'ye',
+        'ж': 'zh', 'з': 'z', 'и': 'y', 'і': 'i', 'ї': 'yi', 'й': 'y', 'к': 'k', 'л': 'l',
+        'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+        'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ь': '',
+        'ю': 'yu', 'я': 'ya',
+
+        'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'H', 'Ґ': 'G', 'Д': 'D', 'Е': 'E', 'Є': 'Ye',
+        'Ж': 'Zh', 'З': 'Z', 'И': 'Y', 'І': 'I', 'Ї': 'Yi', 'Й': 'Y', 'К': 'K', 'Л': 'L',
+        'М': 'M', 'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
+        'Ф': 'F', 'Х': 'Kh', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Shch', 'Ь': '',
+        'Ю': 'Yu', 'Я': 'Ya'
+    }
+    trans_table = str.maketrans(trans_dict)
+    normalize_names_in_folders(litter_folder_path, trans_table)
     return 0
 
 if __name__ == "__main__":
