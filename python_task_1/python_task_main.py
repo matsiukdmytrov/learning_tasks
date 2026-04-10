@@ -6,7 +6,7 @@ from pathlib import Path
 import shutil
 #import cyrtranslit
 
-other_folder = ""
+other_folder = Path()
 
 def normalize(in_str="",in_trans_table=[]):
     #return_sr_start = cyrtranslit.to_latin(in_str,"ua")
@@ -39,27 +39,29 @@ def normalize_names_in_folders(in_folder,trans_table):
     return 0
 
 def sort_files(in_folder,file_extension_dict={}):
-    for fn in file_extension_dict:
-        t = file_extension_dict[fn]
-        for locExt in t:
-            for tf in list(in_folder.glob("*."+locExt)):
-                if "archives" in fn:
-                    shutil.unpack_archive(tf,fn+"\\"+tf.name)
+    for file_extension_folder in file_extension_dict:
+        file_extension_list = file_extension_dict[file_extension_folder]
+        for loc_ext in file_extension_list:
+            for tf in list(in_folder.glob("*."+loc_ext)):
+                if "archives" in str(file_extension_folder):
+                    shutil.unpack_archive(tf,str(file_extension_folder)+"\\"+tf.name)
                     tf.unlink()
                 else:
-                    lp = Path(fn)
-                    if not lp.exists():
-                        lp.mkdir(exist_ok=True)
-                    tf.move_into(fn)
+                    if not file_extension_folder.exists():
+                        file_extension_folder.mkdir(exist_ok=True)
+                    if file_extension_folder.absolute() != tf.parent:
+                        tf.move_into(file_extension_folder)
     for tf in list(in_folder.glob("*.*")):
-        lp = Path(other_folder)
-        if not lp.exists():
-            lp.mkdir(exist_ok=True)
-        tf.move_into(other_folder)
+        if not other_folder.exists():
+            other_folder.mkdir(exist_ok=True)
+        if other_folder != tf.parent:
+            tf.move_into(other_folder)
     return 0
 
 def sort_folders(in_folder,file_extension_dict={}):
     for internal_object in in_folder.iterdir():
+        if internal_object.absolute() in file_extension_dict or internal_object.absolute() == other_folder:
+            continue
         if internal_object.is_dir():
             sort_folders(internal_object,file_extension_dict)
             internal_object.rmdir()
@@ -94,17 +96,17 @@ def main():
     l_audio = ['MP3', 'OGG', 'WAV', 'AMR']
     l_archive = ['ZIP', 'GZ', 'TAR']
 
-    images_folder = litter_folder + "\\images"
-    documents_folder = litter_folder + "\\documents"
-    videos_folder = litter_folder + "\\videos"
-    audio_folder = litter_folder + "\\audio"
-    archives_folder = litter_folder + "\\archives"
+    images_folder = Path(litter_folder + "\\images")
+    documents_folder = Path(litter_folder + "\\documents")
+    videos_folder = Path(litter_folder + "\\videos")
+    audio_folder = Path(litter_folder + "\\audio")
+    archives_folder = Path(litter_folder + "\\archives")
 
     file_extension_dict = {images_folder:l_image,documents_folder:l_document,videos_folder:l_video,audio_folder:l_audio,archives_folder:l_archive}
 
-    other_folder  = litter_folder + "\\other"
+    other_folder  = Path(litter_folder + "\\other")
     litter_folder_path = Path(litter_folder)
-    #sort_folders(litter_folder_path,file_extension_dict)
+    sort_folders(litter_folder_path,file_extension_dict)
 
     trans_dict = {
         'а': 'a', 'б': 'b', 'в': 'v', 'г': 'h', 'ґ': 'g', 'д': 'd', 'е': 'e', 'є': 'ye',
