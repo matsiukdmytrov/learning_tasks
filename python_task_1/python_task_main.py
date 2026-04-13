@@ -7,7 +7,8 @@ other_folder = Path()
 trans_table = dict()
 file_extension_dict = dict()
 
-def normalize(in_str:str)->str:
+
+def normalize(in_str: str) -> str:
     global trans_table
     return_sr_start = in_str.translate(trans_table)
     return_str = ""
@@ -21,22 +22,24 @@ def normalize(in_str:str)->str:
 
     return return_str
 
-def file_rename_with_controle(in_file:Path, in_new_short_file_name:str,iter_suffix:int=0):
+
+def file_rename_with_controle(in_file: Path, in_new_short_file_name: str, iter_suffix: int = 0):
     if iter_suffix == 0:
-        new_file = Path(in_file.parent.as_posix() +"/"+ in_new_short_file_name + in_file.suffix)
+        new_file = Path(in_file.parent.as_posix() + "/" + in_new_short_file_name + in_file.suffix)
     else:
         short_file_name = in_new_short_file_name + "_" + str(iter_suffix)
-        new_file = Path(in_file.parent.as_posix() +"/"+ short_file_name + in_file.suffix)
+        new_file = Path(in_file.parent.as_posix() + "/" + short_file_name + in_file.suffix)
 
     if not new_file.exists():
         in_file.rename(new_file)
     else:
         iter_suffix = iter_suffix + 1
-        file_rename_with_controle(in_file,in_new_short_file_name,iter_suffix)
+        file_rename_with_controle(in_file, in_new_short_file_name, iter_suffix)
 
     return 0
 
-def normalize_names_in_folders(in_folder:Path):
+
+def normalize_names_in_folders(in_folder: Path):
     global trans_table
     for internal_object in in_folder.iterdir():
         if internal_object.is_dir():
@@ -49,38 +52,40 @@ def normalize_names_in_folders(in_folder:Path):
             short_file_name = internal_object.stem
             short_file_name = normalize(short_file_name)
 
-            file_rename_with_controle(internal_object,short_file_name)
+            file_rename_with_controle(internal_object, short_file_name)
     return 0
 
-def file_moveinto_with_controle(in_file:Path, in_move_folder:Path,iter_suffix:int=0):
+
+def file_moveinto_with_controle(in_file: Path, in_move_folder: Path, iter_suffix: int = 0):
     if iter_suffix == 0:
-        new_file = Path(in_move_folder.as_posix() +"/"+ in_file.name)
+        new_file = Path(in_move_folder.as_posix() + "/" + in_file.name)
     else:
         short_file_name = in_file.stem + "_" + str(iter_suffix)
-        new_file = Path(in_move_folder.as_posix() +"/"+ short_file_name + in_file.suffix)
+        new_file = Path(in_move_folder.as_posix() + "/" + short_file_name + in_file.suffix)
 
     if not new_file.exists():
         in_file.rename(new_file)
     else:
         iter_suffix = iter_suffix + 1
-        file_moveinto_with_controle(in_file,in_move_folder,iter_suffix)
+        file_moveinto_with_controle(in_file, in_move_folder, iter_suffix)
 
     return 0
 
-def sort_files(in_folder:Path):
+
+def sort_files(in_folder: Path):
     global file_extension_dict
     for file_extension_folder in file_extension_dict:
         file_extension_list = file_extension_dict[file_extension_folder]
         for loc_ext in file_extension_list:
-            for tf in list(in_folder.glob("*."+loc_ext)):
+            for tf in list(in_folder.glob("*." + loc_ext)):
                 if "archives" in str(file_extension_folder):
-                    shutil.unpack_archive(tf,str(file_extension_folder)+"\\"+tf.name)
+                    shutil.unpack_archive(tf, str(file_extension_folder) + "\\" + tf.name)
                     tf.unlink()
                 else:
                     if not file_extension_folder.exists():
                         file_extension_folder.mkdir(exist_ok=True)
                     if file_extension_folder.absolute() != tf.parent:
-                        file_moveinto_with_controle(tf,file_extension_folder)
+                        file_moveinto_with_controle(tf, file_extension_folder)
     for tf in list(in_folder.glob("*.*")):
         if not other_folder.exists():
             other_folder.mkdir(exist_ok=True)
@@ -88,7 +93,8 @@ def sort_files(in_folder:Path):
             file_moveinto_with_controle(tf, other_folder)
     return 0
 
-def sort_folders(in_folder:Path):
+
+def sort_folders(in_folder: Path):
     global file_extension_dict
     for internal_object in in_folder.iterdir():
         if internal_object.absolute() in file_extension_dict or internal_object.absolute() == other_folder:
@@ -99,7 +105,8 @@ def sort_folders(in_folder:Path):
     sort_files(in_folder)
     return 0
 
-def init_global_variables(in_litter_folder:str):
+
+def init_global_variables(in_litter_folder: str):
     global other_folder
     global trans_table
     global file_extension_dict
@@ -109,13 +116,13 @@ def init_global_variables(in_litter_folder:str):
     extensions_dict = dict()
     extensions_dict["images"] = ['JPEG', 'PNG', 'JPG', 'SVG']
     extensions_dict["documents"] = ['DOC', 'DOCX', 'TXT', 'PDF', 'XLSX', 'PPTX']
-    extensions_dict["videos"] =  ['AVI', 'MP4', 'MOV', 'MKV']
-    extensions_dict["audio"] =  ['MP3', 'OGG', 'WAV', 'AMR']
-    extensions_dict["archives"] =  ['ZIP', 'GZ', 'TAR']
+    extensions_dict["videos"] = ['AVI', 'MP4', 'MOV', 'MKV']
+    extensions_dict["audio"] = ['MP3', 'OGG', 'WAV', 'AMR']
+    extensions_dict["archives"] = ['ZIP', 'GZ', 'TAR']
 
     file_extension_dict = dict()
-    for ext_folder,ext_list in extensions_dict.items():
-        file_extension_dict[Path(in_litter_folder + "\\"+ext_folder)]=ext_list
+    for ext_folder, ext_list in extensions_dict.items():
+        file_extension_dict[Path(in_litter_folder + "\\" + ext_folder)] = ext_list
 
     trans_dict = {
         'а': 'a', 'б': 'b', 'в': 'v', 'г': 'h', 'ґ': 'g', 'д': 'd', 'е': 'e', 'є': 'ye',
@@ -125,13 +132,14 @@ def init_global_variables(in_litter_folder:str):
         'ю': 'yu', 'я': 'ya',
     }
     trans_dict_upper = dict()
-    for dict_key,dict_elem in trans_dict.items():
+    for dict_key, dict_elem in trans_dict.items():
         trans_dict_upper[dict_key.upper()] = dict_elem.upper()
 
     trans_dict = trans_dict | trans_dict_upper
 
     trans_table = str.maketrans(trans_dict)
     return 0
+
 
 def main():
     if len(sys.argv) < 2:
@@ -152,13 +160,14 @@ def main():
 
     print(f"Starting to sort: {litter_folder_path.absolute()}")
 
-    #litter_folder = input("Input litter folder:")
+    # litter_folder = input("Input litter folder:")
     init_global_variables(str(litter_folder_path.absolute()))
-    #litter_folder_path = Path(litter_folder)
+    # litter_folder_path = Path(litter_folder)
 
     sort_folders(litter_folder_path)
     normalize_names_in_folders(litter_folder_path)
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())
