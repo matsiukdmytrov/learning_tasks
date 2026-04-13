@@ -24,6 +24,21 @@ def normalize(in_str:str)->str:
 
     return return_str
 
+def file_rename_with_controle(in_file:Path, in_new_short_file_name:str,iter_suffix:int=0):
+    if iter_suffix == 0:
+        new_file = Path(in_file.parent.as_posix() +"/"+ in_new_short_file_name + in_file.suffix)
+    else:
+        short_file_name = in_new_short_file_name + "_" + str(iter_suffix)
+        new_file = Path(in_file.parent.as_posix() +"/"+ short_file_name + in_file.suffix)
+
+    if not new_file.exists():
+        in_file.rename(new_file)
+    else:
+        iter_suffix = iter_suffix + 1
+        file_rename_with_controle(in_file,in_new_short_file_name,iter_suffix)
+
+    return 0
+
 def normalize_names_in_folders(in_folder:Path):
     global trans_table
     for internal_object in in_folder.iterdir():
@@ -36,22 +51,23 @@ def normalize_names_in_folders(in_folder:Path):
         else:
             short_file_name = internal_object.stem
             short_file_name = normalize(short_file_name)
-            new_file = internal_object.with_name(short_file_name+internal_object.suffix)
-            if not new_file.exists():
-                internal_object.rename(new_file)
-            else:
-                internal_object.rename(new_file)
+
+            file_rename_with_controle(internal_object,short_file_name)
+
+            #new_file = Path(in_folder.as_posix() + "/" + short_file_name+internal_object.suffix)
+            #internal_object.rename(new_file)
+
     return 0
 
 def file_moveinto_with_controle(in_file:Path, in_move_folder:Path,iter_suffix:int=0):
     if iter_suffix == 0:
-        new_file = Path(in_move_folder.as_posix() + in_file.name)
+        new_file = Path(in_move_folder.as_posix() +"/"+ in_file.name)
     else:
         short_file_name = in_file.stem + "_" + str(iter_suffix)
-        new_file = in_file.with_name(in_move_folder.as_posix() + short_file_name + in_file.suffix)
+        new_file = Path(in_move_folder.as_posix() +"/"+ short_file_name + in_file.suffix)
 
     if not new_file.exists():
-        in_file.move_into(in_move_folder)
+        in_file.rename(new_file)
     else:
         iter_suffix = iter_suffix + 1
         file_moveinto_with_controle(in_file,in_move_folder,iter_suffix)
@@ -71,12 +87,14 @@ def sort_files(in_folder:Path):
                     if not file_extension_folder.exists():
                         file_extension_folder.mkdir(exist_ok=True)
                     if file_extension_folder.absolute() != tf.parent:
-                        tf.move_into(file_extension_folder)
+                        file_moveinto_with_controle(tf,file_extension_folder)
+                        #tf.move_into(file_extension_folder)
     for tf in list(in_folder.glob("*.*")):
         if not other_folder.exists():
             other_folder.mkdir(exist_ok=True)
         if other_folder != tf.parent:
-            tf.move_into(other_folder)
+            file_moveinto_with_controle(tf, other_folder)
+            #tf.move_into(other_folder)
     return 0
 
 def sort_folders(in_folder:Path):
@@ -130,12 +148,11 @@ def init_global_variables(in_litter_folder:str):
         'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ь': '',
         'ю': 'yu', 'я': 'ya',
     }
-    #trans_dict_upper = dict()
+    trans_dict_upper = dict()
     for dict_key,dict_elem in trans_dict.items():
-        if dict_key.isupper():
-            break
-        trans_dict.update({dict_key.upper(): dict_elem.upper()})
+        trans_dict_upper[dict_key.upper()] = dict_elem.upper()
 
+    trans_dict = trans_dict | trans_dict_upper
     #    'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'H', 'Ґ': 'G', 'Д': 'D', 'Е': 'E', 'Є': 'Ye',
     #    'Ж': 'Zh', 'З': 'Z', 'И': 'Y', 'І': 'I', 'Ї': 'Yi', 'Й': 'Y', 'К': 'K', 'Л': 'L',
     #    'М': 'M', 'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
