@@ -10,7 +10,7 @@ other_folder = Path()
 trans_table = dict()
 file_extension_dict = dict()
 
-def normalize(in_str:str):
+def normalize(in_str:str)->str:
     global trans_table
     return_sr_start = in_str.translate(trans_table)
     return_str = ""
@@ -37,7 +37,25 @@ def normalize_names_in_folders(in_folder:Path):
             short_file_name = internal_object.stem
             short_file_name = normalize(short_file_name)
             new_file = internal_object.with_name(short_file_name+internal_object.suffix)
-            internal_object.rename(new_file)
+            if not new_file.exists():
+                internal_object.rename(new_file)
+            else:
+                internal_object.rename(new_file)
+    return 0
+
+def file_moveinto_with_controle(in_file:Path, in_move_folder:Path,iter_suffix:int=0):
+    if iter_suffix == 0:
+        new_file = Path(in_move_folder.as_posix() + in_file.name)
+    else:
+        short_file_name = in_file.stem + "_" + str(iter_suffix)
+        new_file = in_file.with_name(in_move_folder.as_posix() + short_file_name + in_file.suffix)
+
+    if not new_file.exists():
+        in_file.move_into(in_move_folder)
+    else:
+        iter_suffix = iter_suffix + 1
+        file_moveinto_with_controle(in_file,in_move_folder,iter_suffix)
+
     return 0
 
 def sort_files(in_folder:Path):
