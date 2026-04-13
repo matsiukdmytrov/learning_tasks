@@ -22,24 +22,22 @@ def get_birthdays_per_week(in_users:list)->dict:
     weekdays_list.append("Thursday")
     weekdays_list.append("Friday")
 
-    #datetime.date.day
-    #datetime.date.month
-    #datetime.date.weekday()
-
-    today_date = datetime.date.today()
-    today_weekday = datetime.datetime.today().weekday()
+    today_date = datetime.date.today() + datetime.timedelta(days=2)
+    today_weekday = today_date.weekday()
 
     if today_weekday == 5 or today_weekday == 6:
-        first_date = datetime.date.__add__(today_date, datetime.timedelta(days=(6-today_weekday)))
-        last_date = datetime.date.__add__(today_date, datetime.timedelta(days=(7+(5-today_weekday))))
+        first_date = today_date + datetime.timedelta(days=(6-today_weekday))
+        last_date = today_date + datetime.timedelta(days=(7+(5-today_weekday)))
     elif today_weekday == 0:
-        first_date = datetime.date.__add__(today_date, datetime.timedelta(days=-2))
-        last_date = datetime.date.__add__(today_date, datetime.timedelta(days=5))
+        first_date = today_date + datetime.timedelta(days=-2)
+        last_date = today_date + datetime.timedelta(days=4)
     else:
         first_date = today_date
-        last_date = datetime.date.__add__(today_date, datetime.timedelta(days=7))
+        last_date = today_date + datetime.timedelta(days=6)
 
     date_dict = dict()
+    for weekday in weekdays_list:
+        date_dict[weekday] = list()
 
     loc_date = first_date
     while loc_date <= last_date:
@@ -50,10 +48,7 @@ def get_birthdays_per_week(in_users:list)->dict:
             date_dict["Monday"] = gel_list_of_birthdays(loc_date - datetime.timedelta(days=2),loc_date,in_users)
         else:
             date_dict[weekdays_list[loc_date.weekday()]] = gel_list_of_birthdays(loc_date, loc_date,in_users)
-
-
-
-
+        loc_date = loc_date + datetime.timedelta(days=1)
 
     return date_dict
 
@@ -61,6 +56,15 @@ def main():
     users = list()
 
     users.append({"name": "Bill Gates", "birthday": datetime.datetime(1955, 10, 28).date()})
+    users.append({"name": "Ingvar", "birthday": datetime.datetime(1955, 4, 11).date()})
+    users.append({"name": "Kyi", "birthday": datetime.datetime(1955, 4, 12).date()})
+    users.append({"name": "Dave", "birthday": datetime.datetime(1955, 4, 13).date()})
+    users.append({"name": "Anna", "birthday": datetime.datetime(1955, 4, 16).date()})
+    users.append({"name": "Han", "birthday": datetime.datetime(1955, 4, 18).date()})
+    users.append({"name": "John", "birthday": datetime.datetime(1955, 4, 19).date()})
+    users.append({"name": "Colin", "birthday": datetime.datetime(1955, 4, 20).date()})
+    users.append({"name": "Jeoffrey", "birthday": datetime.datetime(1955, 4, 21).date()})
+    users.append({"name": "Sansa", "birthday": datetime.datetime(1955, 4, 23).date()})
 
     print(get_birthdays_per_week(users))
     return 0
