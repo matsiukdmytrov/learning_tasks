@@ -1,10 +1,7 @@
 import string
 import sys
-#import os
-#import stat
 from pathlib import Path
 import shutil
-#import cyrtranslit
 
 other_folder = Path()
 trans_table = dict()
@@ -53,10 +50,6 @@ def normalize_names_in_folders(in_folder:Path):
             short_file_name = normalize(short_file_name)
 
             file_rename_with_controle(internal_object,short_file_name)
-
-            #new_file = Path(in_folder.as_posix() + "/" + short_file_name+internal_object.suffix)
-            #internal_object.rename(new_file)
-
     return 0
 
 def file_moveinto_with_controle(in_file:Path, in_move_folder:Path,iter_suffix:int=0):
@@ -88,13 +81,11 @@ def sort_files(in_folder:Path):
                         file_extension_folder.mkdir(exist_ok=True)
                     if file_extension_folder.absolute() != tf.parent:
                         file_moveinto_with_controle(tf,file_extension_folder)
-                        #tf.move_into(file_extension_folder)
     for tf in list(in_folder.glob("*.*")):
         if not other_folder.exists():
             other_folder.mkdir(exist_ok=True)
         if other_folder != tf.parent:
             file_moveinto_with_controle(tf, other_folder)
-            #tf.move_into(other_folder)
     return 0
 
 def sort_folders(in_folder:Path):
@@ -113,18 +104,6 @@ def init_global_variables(in_litter_folder:str):
     global trans_table
     global file_extension_dict
 
-    #l_image = ['JPEG', 'PNG', 'JPG', 'SVG']
-    #l_document = ['DOC', 'DOCX', 'TXT', 'PDF', 'XLSX', 'PPTX']
-    #l_video = ['AVI', 'MP4', 'MOV', 'MKV']
-    #l_audio = ['MP3', 'OGG', 'WAV', 'AMR']
-    #l_archive = ['ZIP', 'GZ', 'TAR']
-
-    #images_folder = Path(in_litter_folder + "\\images")
-    #documents_folder = Path(in_litter_folder + "\\documents")
-    #videos_folder = Path(in_litter_folder + "\\videos")
-    #audio_folder = Path(in_litter_folder + "\\audio")
-    #archives_folder = Path(in_litter_folder + "\\archives")
-
     other_folder = Path(in_litter_folder + "\\other")
 
     extensions_dict = dict()
@@ -138,9 +117,6 @@ def init_global_variables(in_litter_folder:str):
     for ext_folder,ext_list in extensions_dict.items():
         file_extension_dict[Path(in_litter_folder + "\\"+ext_folder)]=ext_list
 
-    #file_extension_dict = {images_folder: l_image, documents_folder: l_document, videos_folder: l_video,
-    #                       audio_folder: l_audio, archives_folder: l_archive}
-
     trans_dict = {
         'а': 'a', 'б': 'b', 'в': 'v', 'г': 'h', 'ґ': 'g', 'д': 'd', 'е': 'e', 'є': 'ye',
         'ж': 'zh', 'з': 'z', 'и': 'y', 'і': 'i', 'ї': 'yi', 'й': 'y', 'к': 'k', 'л': 'l',
@@ -153,38 +129,32 @@ def init_global_variables(in_litter_folder:str):
         trans_dict_upper[dict_key.upper()] = dict_elem.upper()
 
     trans_dict = trans_dict | trans_dict_upper
-    #    'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'H', 'Ґ': 'G', 'Д': 'D', 'Е': 'E', 'Є': 'Ye',
-    #    'Ж': 'Zh', 'З': 'Z', 'И': 'Y', 'І': 'I', 'Ї': 'Yi', 'Й': 'Y', 'К': 'K', 'Л': 'L',
-    #    'М': 'M', 'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
-    #    'Ф': 'F', 'Х': 'Kh', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Shch', 'Ь': '',
-    #    'Ю': 'Yu', 'Я': 'Ya'
-    #}
+
     trans_table = str.maketrans(trans_dict)
     return 0
 
 def main():
-    #if len(sys.argv) < 2:
-    #    print("Error: Please provide a folder path.")
-    #    print("Usage: python sort.py /path/to/folder")
-    #    sys.exit(1)
+    if len(sys.argv) < 2:
+        print("Error: Please provide a folder path.")
+        print("Usage: python sort.py /path/to/folder")
+        sys.exit(1)
 
-    #litter_folder = sys.argv[1]
-    #folder_path = Path(litter_folder)
-
-    #if not folder_path.exists():
-    #    print(f"Error: The path '{folder_path}' does not exist.")
-    #    sys.exit(1)
-
-    #if not folder_path.is_dir():
-    #    print(f"Error: '{folder_path}' is not a directory.")
-    #    sys.exit(1)
-
-    #print(f"Starting to sort: {folder_path.absolute()}")
-
-    litter_folder = input("Input litter folder:")
-    init_global_variables(litter_folder)
-
+    litter_folder = sys.argv[1]
     litter_folder_path = Path(litter_folder)
+
+    if not litter_folder_path.exists():
+        print(f"Error: The path '{litter_folder_path}' does not exist.")
+        sys.exit(1)
+
+    if not litter_folder_path.is_dir():
+        print(f"Error: '{litter_folder_path}' is not a directory.")
+        sys.exit(1)
+
+    print(f"Starting to sort: {litter_folder_path.absolute()}")
+
+    #litter_folder = input("Input litter folder:")
+    init_global_variables(str(litter_folder_path.absolute()))
+    #litter_folder_path = Path(litter_folder)
 
     sort_folders(litter_folder_path)
     normalize_names_in_folders(litter_folder_path)
