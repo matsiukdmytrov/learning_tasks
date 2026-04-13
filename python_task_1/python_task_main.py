@@ -7,8 +7,8 @@ import shutil
 #import cyrtranslit
 
 other_folder = Path()
-trans_table = list()
-file_extension_dict = dict(Path:list)
+trans_table = dict()
+file_extension_dict = dict()
 
 def normalize(in_str:str):
     global trans_table
@@ -28,14 +28,14 @@ def normalize_names_in_folders(in_folder:Path):
     global trans_table
     for internal_object in in_folder.iterdir():
         if internal_object.is_dir():
-            normalize_names_in_folders(internal_object,trans_table)
+            normalize_names_in_folders(internal_object)
             short_file_name = internal_object.name
-            short_file_name = normalize(short_file_name, trans_table)
+            short_file_name = normalize(short_file_name)
             new_file = internal_object.with_name(short_file_name)
             internal_object.rename(new_file)
         else:
             short_file_name = internal_object.stem
-            short_file_name = normalize(short_file_name,trans_table)
+            short_file_name = normalize(short_file_name)
             new_file = internal_object.with_name(short_file_name+internal_object.suffix)
             internal_object.rename(new_file)
     return 0
@@ -67,9 +67,9 @@ def sort_folders(in_folder:Path):
         if internal_object.absolute() in file_extension_dict or internal_object.absolute() == other_folder:
             continue
         if internal_object.is_dir():
-            sort_folders(internal_object,file_extension_dict)
+            sort_folders(internal_object)
             internal_object.rmdir()
-    sort_files(in_folder, file_extension_dict)
+    sort_files(in_folder)
     return 0
 
 def init_global_variables(in_litter_folder:str):
@@ -77,21 +77,33 @@ def init_global_variables(in_litter_folder:str):
     global trans_table
     global file_extension_dict
 
-    l_image = ['JPEG', 'PNG', 'JPG', 'SVG']
-    l_document = ['DOC', 'DOCX', 'TXT', 'PDF', 'XLSX', 'PPTX']
-    l_video = ['AVI', 'MP4', 'MOV', 'MKV']
-    l_audio = ['MP3', 'OGG', 'WAV', 'AMR']
-    l_archive = ['ZIP', 'GZ', 'TAR']
+    #l_image = ['JPEG', 'PNG', 'JPG', 'SVG']
+    #l_document = ['DOC', 'DOCX', 'TXT', 'PDF', 'XLSX', 'PPTX']
+    #l_video = ['AVI', 'MP4', 'MOV', 'MKV']
+    #l_audio = ['MP3', 'OGG', 'WAV', 'AMR']
+    #l_archive = ['ZIP', 'GZ', 'TAR']
 
-    images_folder = Path(in_litter_folder + "\\images")
-    documents_folder = Path(in_litter_folder + "\\documents")
-    videos_folder = Path(in_litter_folder + "\\videos")
-    audio_folder = Path(in_litter_folder + "\\audio")
-    archives_folder = Path(in_litter_folder + "\\archives")
+    #images_folder = Path(in_litter_folder + "\\images")
+    #documents_folder = Path(in_litter_folder + "\\documents")
+    #videos_folder = Path(in_litter_folder + "\\videos")
+    #audio_folder = Path(in_litter_folder + "\\audio")
+    #archives_folder = Path(in_litter_folder + "\\archives")
+
     other_folder = Path(in_litter_folder + "\\other")
 
-    file_extension_dict = {images_folder: l_image, documents_folder: l_document, videos_folder: l_video,
-                           audio_folder: l_audio, archives_folder: l_archive}
+    extensions_dict = dict()
+    extensions_dict["images"] = ['JPEG', 'PNG', 'JPG', 'SVG']
+    extensions_dict["documents"] = ['DOC', 'DOCX', 'TXT', 'PDF', 'XLSX', 'PPTX']
+    extensions_dict["videos"] =  ['AVI', 'MP4', 'MOV', 'MKV']
+    extensions_dict["audio"] =  ['MP3', 'OGG', 'WAV', 'AMR']
+    extensions_dict["archives"] =  ['ZIP', 'GZ', 'TAR']
+
+    file_extension_dict = dict()
+    for ext_folder,ext_list in extensions_dict.items():
+        file_extension_dict[Path(in_litter_folder + "\\"+ext_folder)]=ext_list
+
+    #file_extension_dict = {images_folder: l_image, documents_folder: l_document, videos_folder: l_video,
+    #                       audio_folder: l_audio, archives_folder: l_archive}
 
     trans_dict = {
         'а': 'a', 'б': 'b', 'в': 'v', 'г': 'h', 'ґ': 'g', 'д': 'd', 'е': 'e', 'є': 'ye',
@@ -99,13 +111,19 @@ def init_global_variables(in_litter_folder:str):
         'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
         'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ь': '',
         'ю': 'yu', 'я': 'ya',
-
-        'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'H', 'Ґ': 'G', 'Д': 'D', 'Е': 'E', 'Є': 'Ye',
-        'Ж': 'Zh', 'З': 'Z', 'И': 'Y', 'І': 'I', 'Ї': 'Yi', 'Й': 'Y', 'К': 'K', 'Л': 'L',
-        'М': 'M', 'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
-        'Ф': 'F', 'Х': 'Kh', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Shch', 'Ь': '',
-        'Ю': 'Yu', 'Я': 'Ya'
     }
+    #trans_dict_upper = dict()
+    for dict_key,dict_elem in trans_dict.items():
+        if dict_key.isupper():
+            break
+        trans_dict.update({dict_key.upper(): dict_elem.upper()})
+
+    #    'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'H', 'Ґ': 'G', 'Д': 'D', 'Е': 'E', 'Є': 'Ye',
+    #    'Ж': 'Zh', 'З': 'Z', 'И': 'Y', 'І': 'I', 'Ї': 'Yi', 'Й': 'Y', 'К': 'K', 'Л': 'L',
+    #    'М': 'M', 'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
+    #    'Ф': 'F', 'Х': 'Kh', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Shch', 'Ь': '',
+    #    'Ю': 'Yu', 'Я': 'Ya'
+    #}
     trans_table = str.maketrans(trans_dict)
     return 0
 
