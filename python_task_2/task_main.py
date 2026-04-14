@@ -30,8 +30,6 @@ def get_birthdays_per_week(in_users:list)->dict:
         last_date = today_date + timedelta(days=6)
 
     date_dict = dict()
-    # for weekday in weekdays_list:
-    #     date_dict[weekday] = list()
 
     loc_date = first_date
     while loc_date <= last_date:
