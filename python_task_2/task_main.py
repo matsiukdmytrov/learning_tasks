@@ -1,6 +1,7 @@
 from datetime import datetime, date, timedelta
 
-def gel_list_of_birthdays(start_date:date, end_date:date,in_users:list[dict[str,str|date]])->list:
+
+def gel_list_of_birthdays(start_date: date, end_date: date, in_users: list[dict[str, str | date]]) -> list:
     ret_list = list()
 
     loc_date = start_date
@@ -12,16 +13,16 @@ def gel_list_of_birthdays(start_date:date, end_date:date,in_users:list[dict[str,
 
     return ret_list
 
-def get_birthdays_per_week(in_users:list)->dict:
 
-    weekdays_list = ["Monday","Tuesday","Wednesday","Thursday","Friday"]
+def get_birthdays_per_week(in_users: list) -> dict:
+    weekdays_list = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 
-    today_date = date.today() #+ timedelta(days=2)
+    today_date = date.today()  # + timedelta(days=2)
     today_weekday = today_date.weekday()
 
     if today_weekday == 5 or today_weekday == 6:
-        first_date = today_date + timedelta(days=(6-today_weekday))
-        last_date = today_date + timedelta(days=(7+(5-today_weekday)))
+        first_date = today_date + timedelta(days=(6 - today_weekday))
+        last_date = today_date + timedelta(days=(7 + (5 - today_weekday)))
     elif today_weekday == 0:
         first_date = today_date + timedelta(days=-2)
         last_date = today_date + timedelta(days=4)
@@ -37,10 +38,10 @@ def get_birthdays_per_week(in_users:list)->dict:
             loc_date += timedelta(days=1)
             continue
         elif loc_date.weekday() == 0:
-            temp_list = gel_list_of_birthdays(loc_date - timedelta(days=2),loc_date,in_users)
+            temp_list = gel_list_of_birthdays(loc_date - timedelta(days=2), loc_date, in_users)
             temp_key = "Monday"
         else:
-            temp_list = gel_list_of_birthdays(loc_date, loc_date,in_users)
+            temp_list = gel_list_of_birthdays(loc_date, loc_date, in_users)
             temp_key = weekdays_list[loc_date.weekday()]
         if len(temp_list) > 0:
             date_dict[temp_key] = gel_list_of_birthdays(loc_date - timedelta(days=2), loc_date, in_users)
@@ -48,6 +49,7 @@ def get_birthdays_per_week(in_users:list)->dict:
         loc_date += timedelta(days=1)
 
     return date_dict
+
 
 def main():
     users = [
@@ -64,6 +66,7 @@ def main():
     ]
     print(get_birthdays_per_week(users))
     return 0
+
 
 if __name__ == "__main__":
     main()
