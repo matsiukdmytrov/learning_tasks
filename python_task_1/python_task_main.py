@@ -113,13 +113,13 @@ def init_global_variables(in_litter_folder: str):
 
     other_folder = Path(in_litter_folder + "\\other")
 
-    extensions_dict = dict()
-    extensions_dict["images"] = ['JPEG', 'PNG', 'JPG', 'SVG']
-    extensions_dict["documents"] = ['DOC', 'DOCX', 'TXT', 'PDF', 'XLSX', 'PPTX']
-    extensions_dict["videos"] = ['AVI', 'MP4', 'MOV', 'MKV']
-    extensions_dict["audio"] = ['MP3', 'OGG', 'WAV', 'AMR']
-    extensions_dict["archives"] = ['ZIP', 'GZ', 'TAR']
-
+    extensions_dict = {
+    "images":['JPEG', 'PNG', 'JPG', 'SVG'],
+    "documents": ['DOC', 'DOCX', 'TXT', 'PDF', 'XLSX', 'PPTX'],
+    "videos" : ['AVI', 'MP4', 'MOV', 'MKV'],
+    "audio" : ['MP3', 'OGG', 'WAV', 'AMR'],
+    "archives" : ['ZIP', 'GZ', 'TAR'],
+    }
     file_extension_dict = dict()
     for ext_folder, ext_list in extensions_dict.items():
         file_extension_dict[Path(in_litter_folder + "\\" + ext_folder)] = ext_list
@@ -131,11 +131,12 @@ def init_global_variables(in_litter_folder: str):
         'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ь': '',
         'ю': 'yu', 'я': 'ya',
     }
-    trans_dict_upper = dict()
-    for dict_key, dict_elem in trans_dict.items():
-        trans_dict_upper[dict_key.upper()] = dict_elem.upper()
 
-    trans_dict = trans_dict | trans_dict_upper
+    # trans_dict_upper = dict()
+    # for dict_key, dict_elem in trans_dict.items():
+    #     trans_dict_upper[dict_key.upper()] = dict_elem.upper()
+
+    trans_dict = trans_dict | {dict_key.upper():dict_elem.upper() for dict_key, dict_elem in trans_dict.items()}
 
     trans_table = str.maketrans(trans_dict)
     return 0
