@@ -35,19 +35,22 @@ class Record:
         self.name = Name(name)
         self.phones = []
 
-    def add_phone(self, phone:Phone):
-        self.phones.append(phone)
+    def add_phone(self, in_phone:str):
+        self.phones.append(Phone(in_phone))
 
-    def remove_phone(self, phone:Phone):
-        self.phones.remove(phone)
+    def remove_phone(self, in_phone:str):
+        self.phones.remove(next((p for p in self.phones if p.value == in_phone),None))
 
-    def edit_phone(self, rem_phone:Phone,add_phone:Phone):
-        self.phones.remove(rem_phone)
-        self.phones.append(add_phone)
+    def edit_phone(self, old_phone:str,new_phone:str):
+        self.phones.remove(next((p for p in self.phones if p.value == old_phone),None))
+        self.phones.append(Phone(new_phone))
 
     def find_phone(self, in_phone:str):
-        matches = [p for p in self.phones if p.value == in_phone]
-        return matches
+        match = next((p for p in self.phones if p.value == in_phone),None)
+        if match is None:
+            return ""
+        else:
+            return match.value
         #if phone in self.phones:
         #    return True
         #else:
@@ -57,9 +60,9 @@ class Record:
         return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}"
 
 class AddressBook(UserDict):
-    def __init__(self):
-        UserDict.__init__(self, dict)
-        self.data = {}
+    #def __init__(self):
+    #    UserDict.__init__(self, dict)
+    #    self.data = {}
 
     def add_record(self, in_record:Record):
         self.data[in_record.name.value] = in_record
@@ -96,17 +99,19 @@ jane_record.add_phone("9876543210")
 book.add_record(jane_record)
 
 # Виведення всіх записів у книзі
+print("Виведення всіх записів у книзі:")
 for name, record in book.data.items():
     print(record)
 
 # Знаходження та редагування телефону для John
 john = book.find("John")
 john.edit_phone("1234567890", "1112223333")
-
+print("Знаходження та редагування телефону для John:")
 print(john)
 # Виведення: Contact name: John, phones: 1112223333; 5555555555
 
 # Пошук конкретного телефону у записі John
+print("Пошук конкретного телефону у записі John:")
 found_phone = john.find_phone("5555555555")
 print(f"{john.name}: {found_phone}")
 # Виведення: 5555555555
@@ -114,5 +119,6 @@ print(f"{john.name}: {found_phone}")
 # Видалення запису Jane
 book.delete("Jane")
 
+print("Видалення запису Jane:")
 for name, record in book.data.items():
     print(record)
