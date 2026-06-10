@@ -45,21 +45,37 @@ class Record:
         self.phones.remove(rem_phone)
         self.phones.append(add_phone)
 
-    def find_phone(self, phone:Phone):
-        if phone in self.phones:
-            return True
-        else:
-            return False
-
-
-    def set_name(self, owner, in_name:Name):
-        self.name = in_name
+    def find_phone(self, in_phone:str):
+        matches = [p for p in self.phones if p.value == in_phone]
+        return matches
+        #if phone in self.phones:
+        #    return True
+        #else:
+        #    return False
 
     def __str__(self):
         return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}"
 
 class AddressBook(UserDict):
-    # реалізація класу
+    def __init__(self):
+        UserDict.__init__(self, dict)
+        self.data = {}
+
+    def add_record(self, in_record:Record):
+        self.data[in_record.name.value] = in_record
+
+    def find(self, in_name:str):
+        loc_record = next((p for p in self.data.values() if p.name.value == in_name),None)
+        return loc_record
+
+    def delete(self, in_name:str):
+        #loc_record = next((p for p in self.data.values() if p.name.value == in_name),None)
+        self.data.__delitem__(in_name)
+
+
+
+
+
 ##```
 ## Після реалізації ваш код має виконуватися наступним чином:
 ##```python
@@ -97,3 +113,6 @@ print(f"{john.name}: {found_phone}")
 
 # Видалення запису Jane
 book.delete("Jane")
+
+for name, record in book.data.items():
+    print(record)
