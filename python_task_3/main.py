@@ -1,107 +1,119 @@
 import sys
 
 
+contacts = {}
+
 # Декоратор для обробки помилок введення
 def input_error(func):
     def inner(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except ValueError:
-            return "Give me name and phone please."
+            print("Give me name and phone please.")
+            return "continue"
         except KeyError:
-            return "Contact not found."
+            print("Contact not found.")
+            return "continue"
         except IndexError:
-            return "Enter user name please."
+            print("Enter user name please.")
+            return "continue"
 
     return inner
-
-
-# Парсер команд: розбиває рядок на команду та аргументи
-def parse_input(user_input):
-    cmd, *args = user_input.split()
-    cmd = cmd.strip().lower()
-    return cmd, *args
-
 
 # Хендлери (Функції обробники команд)
 
 @input_error
-def add_contact(args, contacts):
+def add_contact(args ):
     name, phone = args
     if name in contacts:
-        return f"Contact {name} already exists. Use 'change' command to update."
+        print(f"Contact {name} already exists. Use 'change' command to update.")
+        return "continue"
     contacts[name] = phone
-    return f"Contact {name} added."
+    print(f"Contact {name} added.")
+    return "continue"
 
 
 @input_error
-def change_contact(args, contacts):
+def change_contact(args):
     name, phone = args
     if name not in contacts:
         raise KeyError
     contacts[name] = phone
-    return f"Contact {name} updated."
+    print(f"Contact {name} updated.")
+    return "continue"
 
 
 @input_error
-def show_phone(args, contacts):
+def show_phone(args, ):
     name = args[0]
     if name not in contacts:
         raise KeyError
-    return f"{name}: {contacts[name]}"
+    print(f"{name}: {contacts[name]}")
+    return "continue"
 
-
-def show_all(contacts):
+def show_all():
     if not contacts:
         return "Your contact book is empty."
-
     # Форматуємо словник у зручний для читання вигляд
-    result = []
-    for name, phone in contacts.items():
-        result.append(f"{name}: {phone}")
-    return "\n".join(result)
+    return "\n".join([f"{name}: {phone}" for name, phone in contacts.items()])
+
+def close_command(args):
+    print("Good bye!")
+    return "break"
+
+def close_command_long(args):
+    if not args or args[0].lower() != "bye":
+        print("Unknown command.")
+        return "continue"
+    print("Good bye!")
+    return "break"
+
+def hello_command(args):
+    print("How can I help you?")
+    return "continue"
+
+def show_command(args):
+    if args and args[0].lower() == "all":
+        print(show_all())
+        return "continue"
+    else:
+        print("Unknown command. Did you mean 'show all'?")
+        return "continue"
+
+# Парсер команд: розбиває рядок на команду та аргументи
+def parse_input(user_input:str):
+    command, *args = user_input.split()
+    command = command.strip().lower()
+
+    #command, *args = parse_input(user_input)
+
+    if command in command_dict:
+        return command_dict[command](args)
+    else:
+        print("Unknown command.")
+        return "continue"
+
+
+
+command_dict = {"close": close_command, "exit": close_command, "good": close_command_long, "hello": hello_command,
+                "add": add_contact, "change": change_contact, "phone": show_phone, "show": show_command,}
 
 
 # Головна функція, що керує циклом запит-відповідь
 def main():
-    contacts = {}
+
+
     print("Welcome to the assistant bot!")
 
     while True:
         user_input = input("Enter a command: ")
         if not user_input.strip():
             continue
-
-        command, *args = parse_input(user_input)
-
-        if command in ["close", "exit", "good"]:
-            # Додаткова перевірка для "good bye"
-            if command == "good" and (not args or args[0].lower() != "bye"):
-                print("Unknown command.")
-                continue
-            print("Good bye!")
+        res_perse_input = parse_input(user_input)
+        if res_perse_input == "break":
             break
-
-        elif command == "hello":
-            print("How can I help you?")
-
-        elif command == "add":
-            print(add_contact(args, contacts))
-
-        elif command == "change":
-            print(change_contact(args, contacts))
-
-        elif command == "phone":
-            print(show_phone(args, contacts))
-
-        elif command == "show":
-            if args and args[0].lower() == "all":
-                print(show_all(contacts))
-            else:
-                print("Unknown command. Did you mean 'show all'?")
-
         else:
-            print("Unknown command.")
+            continue
 
 
 if __name__ == "__main__":
