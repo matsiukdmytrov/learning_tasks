@@ -1,5 +1,3 @@
-import sys
-
 
 contacts = {}
 
@@ -9,28 +7,22 @@ def input_error(func):
         try:
             return func(*args, **kwargs)
         except ValueError:
-            print("Give me name and phone please.")
-            return "continue"
+            return "Give me name and phone please."
         except KeyError:
-            print("Contact not found.")
-            return "continue"
+            return "Contact not found."
         except IndexError:
-            print("Enter user name please.")
-            return "continue"
-
+            return "Enter user name please."
     return inner
 
 # Хендлери (Функції обробники команд)
 
 @input_error
-def add_contact(args ):
+def add_contact(args):
     name, phone = args
     if name in contacts:
-        print(f"Contact {name} already exists. Use 'change' command to update.")
-        return "continue"
+        return f"Contact {name} already exists. Use 'change' command to update."
     contacts[name] = phone
-    print(f"Contact {name} added.")
-    return "continue"
+    return f"Contact {name} added."
 
 
 @input_error
@@ -39,69 +31,51 @@ def change_contact(args):
     if name not in contacts:
         raise KeyError
     contacts[name] = phone
-    print(f"Contact {name} updated.")
-    return "continue"
+    return f"Contact {name} updated."
 
 
 @input_error
 def show_phone(args, ):
+    if len(args)==0:
+        raise IndexError
     name = args[0]
     if name not in contacts:
         raise KeyError
-    print(f"{name}: {contacts[name]}")
-    return "continue"
+    return f"{name}: {contacts[name]}"
 
-def show_all():
+def show_all(args):
     if not contacts:
         return "Your contact book is empty."
     # Форматуємо словник у зручний для читання вигляд
     return "\n".join([f"{name}: {phone}" for name, phone in contacts.items()])
 
 def close_command(args):
-    print("Good bye!")
-    return "break"
-
-def close_command_long(args):
-    if not args or args[0].lower() != "bye":
-        print("Unknown command.")
-        return "continue"
-    print("Good bye!")
     return "break"
 
 def hello_command(args):
-    print("How can I help you?")
-    return "continue"
-
-def show_command(args):
-    if args and args[0].lower() == "all":
-        print(show_all())
-        return "continue"
-    else:
-        print("Unknown command. Did you mean 'show all'?")
-        return "continue"
+    return "How can I help you?"
 
 # Парсер команд: розбиває рядок на команду та аргументи
 def parse_input(user_input:str):
     command, *args = user_input.split()
     command = command.strip().lower()
 
-    #command, *args = parse_input(user_input)
+    if command == "good":
+        if not(len(args) > 0 and args[0].strip().lower() == "bye"):
+            return "Unknown command."
+    elif command == "show":
+        if not(len(args) > 0 and args[0].strip().lower() == "all"):
+            return "Unknown command."
 
-    if command in command_dict:
-        return command_dict[command](args)
-    else:
-        print("Unknown command.")
-        return "continue"
+    return command, *args
 
 
-
-command_dict = {"close": close_command, "exit": close_command, "good": close_command_long, "hello": hello_command,
-                "add": add_contact, "change": change_contact, "phone": show_phone, "show": show_command,}
+command_dict = {"close": close_command, "exit": close_command, "good": close_command, "hello": hello_command,
+                "add": add_contact, "change": change_contact, "phone": show_phone, "show": show_all,}
 
 
 # Головна функція, що керує циклом запит-відповідь
 def main():
-
 
     print("Welcome to the assistant bot!")
 
@@ -109,12 +83,19 @@ def main():
         user_input = input("Enter a command: ")
         if not user_input.strip():
             continue
-        res_perse_input = parse_input(user_input)
-        if res_perse_input == "break":
-            break
-        else:
-            continue
 
+        command, *args = parse_input(user_input)
+        if command in command_dict:
+            res_parse_input = command_dict[command](args)
+            if res_parse_input == "break":
+                print("Good bye!")
+                break
+            else:
+                print(res_parse_input)
+                continue
+        else:
+            print("Unknown command.")
+            continue
 
 if __name__ == "__main__":
     main()
