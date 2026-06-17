@@ -23,7 +23,7 @@ class Phone(Field):
 
     @staticmethod
     def __isValid__(value:str):
-        if value.__len__() == 10:
+        if len(value) == 10:
             if value.isdigit():
                 return True
             else:
@@ -105,35 +105,35 @@ def input_error(func):
 
     return inner
 
-# Парсер команд: розбиває рядок на команду та аргументи
-def parse_input(user_input):
-    cmd, *args = user_input.split()
-    cmd = cmd.strip().lower()
-    return cmd, *args
+# # Парсер команд: розбиває рядок на команду та аргументи
+# def parse_input(user_input):
+#     cmd, *args = user_input.split()
+#     cmd = cmd.strip().lower()
+#     return cmd, *args
 
 @input_error
-def add_contact(args, loc_book:AddressBook):
+def add_contact(args):
     loc_name = args[0]
     loc_phone_list = []
     if len(args) > 1:
         loc_phone_list = args[1:]
 
-    found_rec = loc_book.find(loc_name)
+    found_rec = main_book.find(loc_name)
     if found_rec is None:
         loc_rec = Record(loc_name)
         if len(loc_phone_list) > 0:
             for loc_phone in loc_phone_list:
                 loc_rec.add_phone(loc_phone)
-        loc_book.add_record(loc_rec)
+        main_book.add_record(loc_rec)
         return f"Контакт {loc_name} додано."
     else:
         return f"Контакт {loc_name} вже існує."
 
 @input_error
-def change_contact(args, loc_book:AddressBook):
+def change_contact(args):
     loc_name, phone_before, phone_after = args
 
-    loc_rec = loc_book.find(loc_name)
+    loc_rec = main_book.find(loc_name)
     if loc_rec is None:
         return f"Контакт {loc_name} не знайдено."
     else:
@@ -142,63 +142,113 @@ def change_contact(args, loc_book:AddressBook):
 
 
 @input_error
-def show_phone(args, loc_book:AddressBook):
+def show_phone(args):
     loc_phone = args[0]
 
-    found_phone_rec = loc_book.find_by_phone(loc_phone)
+    found_phone_rec = main_book.find_by_phone(loc_phone)
     if found_phone_rec is None:
         return f"Контакт по телефону {loc_phone} не знайдено."
     else:
         print(found_phone_rec)
 
-def show_all(loc_book:AddressBook):
-    if not loc_book.__len__():
+def show_all(args):
+    if not len(main_book):
         print("Ше нічого не зробив, а вже дивишся (Книга контактів порожня).")
         return
 
-    for loc_name, loc_record in loc_book.data.items():
+    for loc_name, loc_record in main_book.data.items():
         print(loc_record)
 
+
+def close_command(args):
+    return "break"
+
+def hello_command(args):
+    return "How can I help you?"
+
+# Парсер команд: розбиває рядок на команду та аргументи
+def parse_input(user_input:str):
+    command, *args = user_input.split()
+    command = command.strip().lower()
+
+    if command == "good":
+        if not(len(args) > 0 and args[0].strip().lower() == "bye"):
+            return "Unknown command."
+    elif command == "show":
+        if not(len(args) > 0 and args[0].strip().lower() == "all"):
+            return "Unknown command."
+
+    return command, *args
+
+
+command_dict = {"close": close_command, "exit": close_command, "good": close_command, "hello": hello_command,
+                "add": add_contact, "change": change_contact, "phone": show_phone, "show": show_all,}
+
+
+main_book = AddressBook()
 # Головна функція, що керує циклом запит-відповідь
 def main():
-    main_book = AddressBook()
-    print("Вас вітає бот-асистент!")
+
+    print("Welcome to the assistant bot!")
 
     while True:
-        user_input = input("Введіть команду: ")
+        user_input = input("Enter a command: ")
         if not user_input.strip():
             continue
 
         command, *args = parse_input(user_input)
-
-        if command in ["close", "exit", "good"]:
-            # Додаткова перевірка для "good bye"
-            if command == "good" and (not args or args[0].lower() != "bye"):
-                print("Мене до такого розробник не готував (невідома команда).")
-                continue
-            print("Уходиш - ну й п*здуй (Бувай)!")
-            break
-
-        elif command == "hello":
-            print("Шо ти з мене хочеш (Чим я можу допомогти)?")
-
-        elif command == "add":
-            print(add_contact(args, main_book))
-
-        elif command == "change":
-            print(change_contact(args, main_book))
-
-        elif command == "phone":
-            print(show_phone(args, main_book))
-
-        elif command == "show":
-            if args and args[0].lower() == "all":
-                show_all(main_book)
+        if command in command_dict:
+            res_parse_input = command_dict[command](args)
+            if res_parse_input == "break":
+                print("Good bye!")
+                break
             else:
-                print("Шось не по нашому (невідома команда). Можливо ти мав на увазі 'show all'?")
-
+                print(res_parse_input)
+                continue
         else:
-            print("Мене до такого розробник не готував (невідома команда).")
+            print("Unknown command.")
+            continue
+
+# # Головна функція, що керує циклом запит-відповідь
+# def main():
+#
+#     print("Вас вітає бот-асистент!")
+#
+#     while True:
+#         user_input = input("Введіть команду: ")
+#         if not user_input.strip():
+#             continue
+#
+#         command, *args = parse_input(user_input)
+#
+#         if command in ["close", "exit", "good"]:
+#             # Додаткова перевірка для "good bye"
+#             if command == "good" and (not args or args[0].lower() != "bye"):
+#                 print("Мене до такого розробник не готував (невідома команда).")
+#                 continue
+#             print("Уходиш - ну й п*здуй (Бувай)!")
+#             break
+#
+#         elif command == "hello":
+#             print("Шо ти з мене хочеш (Чим я можу допомогти)?")
+#
+#         elif command == "add":
+#             print(add_contact(args, main_book))
+#
+#         elif command == "change":
+#             print(change_contact(args, main_book))
+#
+#         elif command == "phone":
+#             print(show_phone(args, main_book))
+#
+#         elif command == "show":
+#             if args and args[0].lower() == "all":
+#                 show_all(main_book)
+#             else:
+#                 print("Шось не по нашому (невідома команда). Можливо ти мав на увазі 'show all'?")
+#
+#         else:
+#             print("Мене до такого розробник не готував (невідома команда).")
 
 
 if __name__ == "__main__":
