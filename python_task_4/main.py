@@ -150,11 +150,11 @@ def show_phone(args):
         return f"Контакт по телефону {loc_phone} не знайдено."
     else:
         print(found_phone_rec)
+        return ""
 
 def show_all(args):
     if not len(main_book):
-        print("Ше нічого не зробив, а вже дивишся (Книга контактів порожня).")
-        return
+        return "Ше нічого не зробив, а вже дивишся (Книга контактів порожня)."
 
     for loc_name, loc_record in main_book.data.items():
         print(loc_record)
