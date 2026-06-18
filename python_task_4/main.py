@@ -1,5 +1,6 @@
 from collections import UserDict
 from operator import truediv
+from tokenize import String
 
 
 class Field:
@@ -12,7 +13,10 @@ class Field:
 
 class Name(Field):
     def __init__(self, value):
-        Field.__init__(self, value)
+        if value == "":
+             raise ValueError("Ім'я повинно бути заповнене")
+        else:
+            Field.__init__(self, value)
 
 class Phone(Field):
     def __init__(self, value):
@@ -35,9 +39,16 @@ class Phone(Field):
 class Record:
     name:Name
     phones:list[Phone]
-    def __init__(self, name):
-        self.name = Name(name)
-        self.phones = []
+    def __init__(self, args):
+        if len(args) == 0:
+            raise ValueError("Ім'я повинно бути заповнене")
+        else:
+            self.name = Name(args[0])
+            self.phones = []
+            if len(args) > 1:
+                loc_phone_list = args[1:]
+                for loc_phone in loc_phone_list:
+                    self.add_phone(loc_phone)
 
     def add_phone(self, in_phone:str):
         self.phones.append(Phone(in_phone))
@@ -65,30 +76,60 @@ class Record:
         else:
            return True
 
+    def __eq__(self, other):
+        if not isinstance(other, Record):
+            if isinstance(other, str):
+                return self.name.value == other
+            else:
+                return False
+        else:
+            return self.name == other.name
 
     def __str__(self):
         return f"Контакт: {self.name.value}, телефони: {'; '.join(p.value for p in self.phones)}"
 
 class AddressBook(UserDict):
     data:dict[str, Record]
-    #def __init__(self):
-    #    UserDict.__init__(self, dict)
-    #    self.data = {}
 
     def add_record(self, in_record:Record):
         self.data[in_record.name.value] = in_record
+        return "Запис додано"
 
     def find(self, in_name:str):
-        loc_record = next((p for p in self.data.values() if p.name.value == in_name),None)
-        return loc_record
+        loc_record = next((p for p in self.data.values() if p == in_name),None)
+        if loc_record is not None:
+            return loc_record
+        else:
+            return "Запис не знайдено"
+
+    def add_contact(self, args):
+        loc_name = args[0]
+
+        found_rec = self.find(loc_name)
+        if found_rec is None:
+            return f"Контакт {loc_name} вже існує."
+        else:
+            loc_rec = Record(args)
+            self.add_record(loc_rec)
+            return f"Контакт {loc_name} додано."
 
     def find_by_phone(self, in_phone:str):
         loc_record = next((p for p in self.data.values() if p.has_phone(in_phone)),None)
-        return loc_record
+        if loc_record is not None:
+            return loc_record
+        else:
+            return "Запис не знайдено"
 
     def delete(self, in_name:str):
         #loc_record = next((p for p in self.data.values() if p.name.value == in_name),None)
         self.data.__delitem__(in_name)
+        return "Запис видалено"
+
+    def show_all(self):
+        if not len(self):
+            return "Ше нічого не зробив, а вже дивишся (Книга контактів порожня)."
+        else:
+            return f"{'\n'.join(str(p) for p in self.data.values())}"
 
 
 # Декоратор для обробки помилок введення
@@ -105,29 +146,9 @@ def input_error(func):
 
     return inner
 
-# # Парсер команд: розбиває рядок на команду та аргументи
-# def parse_input(user_input):
-#     cmd, *args = user_input.split()
-#     cmd = cmd.strip().lower()
-#     return cmd, *args
-
 @input_error
 def add_contact(args):
-    loc_name = args[0]
-    loc_phone_list = []
-    if len(args) > 1:
-        loc_phone_list = args[1:]
-
-    found_rec = main_book.find(loc_name)
-    if found_rec is None:
-        loc_rec = Record(loc_name)
-        if len(loc_phone_list) > 0:
-            for loc_phone in loc_phone_list:
-                loc_rec.add_phone(loc_phone)
-        main_book.add_record(loc_rec)
-        return f"Контакт {loc_name} додано."
-    else:
-        return f"Контакт {loc_name} вже існує."
+    return main_book.add_contact(args)
 
 @input_error
 def change_contact(args):
@@ -149,16 +170,11 @@ def show_phone(args):
     if found_phone_rec is None:
         return f"Контакт по телефону {loc_phone} не знайдено."
     else:
-        print(found_phone_rec)
-        return ""
+        return found_phone_rec
 
+@input_error
 def show_all(args):
-    if not len(main_book):
-        return "Ше нічого не зробив, а вже дивишся (Книга контактів порожня)."
-
-    for loc_name, loc_record in main_book.data.items():
-        print(loc_record)
-
+    return main_book.show_all()
 
 def close_command(args):
     return "break"
