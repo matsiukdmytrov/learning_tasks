@@ -1,7 +1,4 @@
 from collections import UserDict
-from operator import truediv
-from tokenize import String
-
 
 class Field:
     value: str
@@ -16,24 +13,20 @@ class Name(Field):
         if value == "":
              raise ValueError("Ім'я повинно бути заповнене")
         else:
-            Field.__init__(self, value)
+            super().__init__(value)
 
 class Phone(Field):
     def __init__(self, value):
-        if not Phone.__isValid__(value):
+        if not Phone.is_valid(value):
             raise ValueError("Телефон може містити тільки цифри і повинен мати довжину 10 символів")
         else:
-            Field.__init__(self, value)
+            super().__init__(value)
 
     @staticmethod
-    def __isValid__(value:str):
-        if len(value) == 10:
-            if value.isdigit():
-                return True
-            else:
-                return False
-        else:
-            return False
+    def is_valid(value:str)->bool:
+        if len(value) == 10 and value.isdigit():
+            return True
+        return False
 
 
 class Record:
@@ -55,35 +48,26 @@ class Record:
 
     def remove_phone(self, in_phone:str):
         loc_found_phone = next((p for p in self.phones if p.value == in_phone),None)
-        if loc_found_phone is not None:
+        if loc_found_phone:
             self.phones.remove(loc_found_phone)
 
     def edit_phone(self, old_phone:str,new_phone:str):
         loc_found_phone = next((p for p in self.phones if p.value == old_phone),None)
-        loc_found_phone.value = new_phone
+        if loc_found_phone:
+            loc_found_phone.value = new_phone
 
-    def find_phone(self, in_phone:str):
-        match = next((p for p in self.phones if p.value == in_phone),None)
-        if match is None:
-            return ""
-        else:
-            return match.value
+    def find_phone(self, in_phone:str)->Phone|None:
+        return next((p for p in self.phones if p.value == in_phone),None)
 
-    def has_phone(self, in_phone: str):
-        match = next((p for p in self.phones if p.value == in_phone), None)
-        if match is None:
-           return False
-        else:
-           return True
+    def has_phone(self, in_phone: str)->bool:
+        return next((p for p in self.phones if p.value == in_phone), None) is not None
 
-    def __eq__(self, other):
-        if not isinstance(other, Record):
-            if isinstance(other, str):
-                return self.name.value == other
-            else:
-                return False
-        else:
+    def __eq__(self, other)->bool:
+        if isinstance(other, Record):
             return self.name == other.name
+        if isinstance(other, str):
+            return self.name.value == other
+        return False
 
     def __str__(self):
         return f"Контакт: {self.name.value}, телефони: {'; '.join(p.value for p in self.phones)}"
@@ -93,43 +77,48 @@ class AddressBook(UserDict):
 
     def add_record(self, in_record:Record):
         self.data[in_record.name.value] = in_record
-        return "Запис додано"
 
-    def find(self, in_name:str):
-        loc_record = next((p for p in self.data.values() if p == in_name),None)
-        if loc_record is not None:
-            return loc_record
-        else:
-            return "Запис не знайдено"
+    def find(self, in_name:str)->Record|None:
+        return next((p for p in self.data.values() if p == in_name),None)
 
-    def add_contact(self, args):
+    def delete(self, args):
+        self.data.pop(args[0])
+
+    def find_by_phone(self, in_phone:str)->Record|None:
+        return next((p for p in self.data.values() if p.has_phone(in_phone)),None)
+
+    def add_contact(self, args)->str:
         loc_name = args[0]
-
         found_rec = self.find(loc_name)
-        if found_rec is None:
+        if found_rec:
             return f"Контакт {loc_name} вже існує."
-        else:
-            loc_rec = Record(args)
-            self.add_record(loc_rec)
-            return f"Контакт {loc_name} додано."
+        self.add_record(Record(args))
+        return f"Контакт {loc_name} додано."
 
-    def find_by_phone(self, in_phone:str):
-        loc_record = next((p for p in self.data.values() if p.has_phone(in_phone)),None)
-        if loc_record is not None:
-            return loc_record
-        else:
-            return "Запис не знайдено"
-
-    def delete(self, in_name:str):
-        #loc_record = next((p for p in self.data.values() if p.name.value == in_name),None)
-        self.data.__delitem__(in_name)
-        return "Запис видалено"
-
-    def show_all(self):
-        if not len(self):
-            return "Ше нічого не зробив, а вже дивишся (Книга контактів порожня)."
-        else:
+    def show_all(self)->str:
+        if self.data:
             return f"{'\n'.join(str(p) for p in self.data.values())}"
+        return "Ше нічого не зробив, а вже дивишся (Книга контактів порожня)."
+
+    def change_contact(self, args)->str:
+        loc_name, phone_before, phone_after = args
+
+        loc_rec = self.find(loc_name)
+        if not loc_rec:
+            return f"Контакт {loc_name} не знайдено."
+
+        loc_rec.edit_phone(phone_before, phone_after)
+        return f"Контакт {loc_name} змінено."
+
+    def show_phone(self,args) -> str:
+        loc_phone = args[0]
+
+        found_phone_rec = self.find_by_phone(loc_phone)
+        if found_phone_rec:
+            return f"{found_phone_rec}"
+        return f"Контакт по телефону {loc_phone} не знайдено."
+
+
 
 
 # Декоратор для обробки помилок введення
@@ -143,47 +132,40 @@ def input_error(func):
             return "Контакт не знайдено."
         except IndexError:
             return "Enter user name please."
+        except TypeError as t:
+            return f"{t}"
 
     return inner
 
 @input_error
-def add_contact(args):
+def add_contact(args)->str:
     return main_book.add_contact(args)
 
 @input_error
-def change_contact(args):
-    loc_name, phone_before, phone_after = args
-
-    loc_rec = main_book.find(loc_name)
-    if loc_rec is None:
-        return f"Контакт {loc_name} не знайдено."
-    else:
-        loc_rec.edit_phone(phone_before, phone_after)
-        return f"Контакт {loc_name} змінено."
-
+def change_contact(args)->str:
+    return main_book.change_contact(args)
 
 @input_error
-def show_phone(args):
-    loc_phone = args[0]
-
-    found_phone_rec = main_book.find_by_phone(loc_phone)
-    if found_phone_rec is None:
-        return f"Контакт по телефону {loc_phone} не знайдено."
-    else:
-        return found_phone_rec
+def show_phone(args)->str:
+    return main_book.show_phone(args)
 
 @input_error
-def show_all(args):
+def show_all(args)->str:
     return main_book.show_all()
 
-def close_command(args):
+@input_error
+def del_contact(args)->str:
+    main_book.delete(args)
+    return "Запис видалено"
+
+def close_command(args)->str:
     return "break"
 
-def hello_command(args):
+def hello_command(args)->str:
     return "How can I help you?"
 
 # Парсер команд: розбиває рядок на команду та аргументи
-def parse_input(user_input:str):
+def parse_input(user_input:str)->tuple|str:
     command, *args = user_input.split()
     command = command.strip().lower()
 
@@ -198,7 +180,7 @@ def parse_input(user_input:str):
 
 
 command_dict = {"close": close_command, "exit": close_command, "good": close_command, "hello": hello_command,
-                "add": add_contact, "change": change_contact, "phone": show_phone, "show": show_all,}
+                "add": add_contact,"del": del_contact, "change": change_contact, "phone": show_phone, "show": show_all,}
 
 
 main_book = AddressBook()
@@ -213,8 +195,9 @@ def main():
             continue
 
         command, *args = parse_input(user_input)
-        if command in command_dict:
-            res_parse_input = command_dict[command](args)
+        loc_func = command_dict.get(command)
+        if loc_func:
+            res_parse_input = loc_func(args)
             if res_parse_input == "break":
                 print("Good bye!")
                 break
