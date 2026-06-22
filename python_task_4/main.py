@@ -8,59 +8,54 @@ class Field:
     def __str__(self):
         return str(self.value)
 
+    def __repr__(self):
+        return str(self.value)
+
 class Name(Field):
     def __init__(self, value):
         if value == "":
              raise ValueError("Ім'я повинно бути заповнене")
-        else:
-            super().__init__(value)
+        super().__init__(value)
 
 class Phone(Field):
     def __init__(self, value):
-        if not Phone.is_valid(value):
+        if not self.is_valid(value):
             raise ValueError("Телефон може містити тільки цифри і повинен мати довжину 10 символів")
-        else:
-            super().__init__(value)
+        super().__init__(value)
 
-    @staticmethod
-    def is_valid(value:str)->bool:
-        if len(value) == 10 and value.isdigit():
-            return True
-        return False
-
+    @classmethod
+    def is_valid(cls, value:str)->bool:
+        return len(value) == 10 and value.isdigit()
 
 class Record:
     name:Name
     phones:list[Phone]
     def __init__(self, args):
-        if len(args) == 0:
-            raise ValueError("Ім'я повинно бути заповнене")
-        else:
-            self.name = Name(args[0])
-            self.phones = []
-            if len(args) > 1:
-                loc_phone_list = args[1:]
-                for loc_phone in loc_phone_list:
-                    self.add_phone(loc_phone)
+        self.name = Name(args[0])
+        self.phones = []
+        if len(args) > 1:
+           loc_phone_list = args[1:]
+           for loc_phone in loc_phone_list:
+               self.add_phone(loc_phone)
 
     def add_phone(self, in_phone:str):
         self.phones.append(Phone(in_phone))
 
+    def find_phone(self, in_phone:str)->Phone|None:
+        return next((p for p in self.phones if p.value == in_phone),None)
+
     def remove_phone(self, in_phone:str):
-        loc_found_phone = next((p for p in self.phones if p.value == in_phone),None)
+        loc_found_phone = self.find_phone(in_phone)
         if loc_found_phone:
             self.phones.remove(loc_found_phone)
 
     def edit_phone(self, old_phone:str,new_phone:str):
-        loc_found_phone = next((p for p in self.phones if p.value == old_phone),None)
+        loc_found_phone = self.find_phone(old_phone)
         if loc_found_phone:
             loc_found_phone.value = new_phone
 
-    def find_phone(self, in_phone:str)->Phone|None:
-        return next((p for p in self.phones if p.value == in_phone),None)
-
     def has_phone(self, in_phone: str)->bool:
-        return next((p for p in self.phones if p.value == in_phone), None) is not None
+        return self.find_phone(in_phone) is not None
 
     def __eq__(self, other)->bool:
         if isinstance(other, Record):
