@@ -28,13 +28,19 @@ class Phone(Field):
     def is_valid(cls, value:str)->bool:
         return len(value) == 10 and value.isdigit()
 
+    # def __str__(self):
+    #     return str(self.value)
+
 class Birthday(Field):
     # datetime(1955, 10, 28)
     def __init__(self, in_value:str):
         if not self.is_valid(in_value):
             raise ValueError("День народження повинен бути вказаний в форматі 2022-02-24")
         super().__init__(in_value)
-        self.value: datetime = datetime.strptime(in_value, "%Y-%m-%d")
+        self.value: date = datetime.strptime(in_value, "%Y-%m-%d").date()
+
+    def __str__(self):
+        return str(self.value.strftime("%Y-%m-%d"))
 
     @classmethod
     def is_valid(cls, value: str) -> bool:
@@ -50,13 +56,21 @@ class Birthday(Field):
 class Record:
     name:Name
     phones:list[Phone]
+    birthday:Birthday
+
     def __init__(self, args):
         self.name = Name(args[0])
         self.phones = []
+        #self.birthday =
         if len(args) > 1:
-           loc_phone_list = args[1:]
-           for loc_phone in loc_phone_list:
-               self.add_phone(loc_phone)
+           loc_add_info_list = args[1:]
+           loc_add_info: str
+           for loc_add_info in loc_add_info_list:
+               if Phone.is_valid(loc_add_info):
+                   self.add_phone(loc_add_info)
+               elif Birthday.is_valid(loc_add_info):
+                   self.birthday = Birthday(loc_add_info)
+
 
     def add_phone(self, in_phone:str):
         self.phones.append(Phone(in_phone))
@@ -77,6 +91,20 @@ class Record:
     def has_phone(self, in_phone: str)->bool:
         return self.find_phone(in_phone) is not None
 
+    def days_to_birthday(self) -> int:
+        today = date.today()
+        # Встановлюємо день народження на поточний рік
+        next_birthday = self.birthday.value.replace(year=today.year)
+
+        # Якщо день народження цього року вже пройшов (або сьогодні),
+        # рахуємо дні до дня народження у наступному році
+        if next_birthday <= today:
+            next_birthday = next_birthday.replace(year=today.year + 1)
+
+        # Рахуємо різницю в днях
+        delta = next_birthday - today
+        return delta.days
+
     def __eq__(self, other)->bool:
         if isinstance(other, Record):
             return self.name == other.name
@@ -85,7 +113,7 @@ class Record:
         return False
 
     def __str__(self):
-        return f"Контакт: {self.name.value}, телефони: {'; '.join(p.value for p in self.phones)}"
+        return f"Контакт: {self.name}; телефони: {', '.join(str(p) for p in self.phones)}; День народження: {self.birthday}"
 
 class AddressBook(UserDict):
     data:dict[str, Record]
