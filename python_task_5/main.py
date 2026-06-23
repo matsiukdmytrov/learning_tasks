@@ -1,5 +1,6 @@
 from collections import UserDict
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
+import re
 
 class Field:
     value: str
@@ -19,32 +20,52 @@ class Name(Field):
         super().__init__(value)
 
 class Phone(Field):
+    __value:str
+
     def __init__(self, value):
+        super().__init__(value)
+        self.value = value
+
+    @property
+    def value(self):
+        return self.__value
+
+    @value.setter
+    def value(self, value: str):
         if not self.is_valid(value):
             raise ValueError("Телефон може містити тільки цифри і повинен мати довжину 10 символів")
-        super().__init__(value)
+        self.__value = value
 
     @classmethod
     def is_valid(cls, value:str)->bool:
         return len(value) == 10 and value.isdigit()
 
-    # def __str__(self):
-    #     return str(self.value)
+    def __str__(self):
+         return str(self.value)
 
 class Birthday(Field):
     # datetime(1955, 10, 28)
+    __value:str
     def __init__(self, in_value:str):
-        if not self.is_valid(in_value):
-            raise ValueError("День народження повинен бути вказаний в форматі 2022-02-24")
         super().__init__(in_value)
-        self.value: date = datetime.strptime(in_value, "%Y-%m-%d").date()
+        self.value = in_value
+
+    @property
+    def value(self):
+        return self.__value
+
+    @value.setter
+    def value(self, value:str):
+        if not self.is_valid(value):
+            raise ValueError("День народження повинен бути вказаний в форматі 2022-02-24")
+        self.__value: date = datetime.strptime(value, "%Y-%m-%d").date()
 
     def __str__(self):
         return str(self.value.strftime("%Y-%m-%d"))
 
     @classmethod
     def is_valid(cls, value: str) -> bool:
-        return True
+        return re.match(r"^\d{4}-\d{2}-\d{2}$", value) is not None
 
 
     # @classmethod
@@ -113,7 +134,11 @@ class Record:
         return False
 
     def __str__(self):
-        return f"Контакт: {self.name}; телефони: {', '.join(str(p) for p in self.phones)}; День народження: {self.birthday}"
+        if self.birthday is None:
+            lb=""
+        else:
+            lb = f"{self.birthday}"
+        return f"Контакт: {self.name}; телефони: {', '.join(str(p) for p in self.phones)}; День народження: {lb}"
 
 class AddressBook(UserDict):
     data:dict[str, Record]
@@ -170,13 +195,13 @@ def input_error(func):
         try:
             return func(*args, **kwargs)
         except ValueError as e:
-            return f"{e}"
+            return f"ValueError: {e}"
         except KeyError:
             return "Контакт не знайдено."
         except IndexError:
             return "Enter user name please."
         except TypeError as t:
-            return f"{t}"
+            return f"TypeError: {t}"
 
     return inner
 
