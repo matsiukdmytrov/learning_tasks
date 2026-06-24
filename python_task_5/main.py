@@ -1,10 +1,13 @@
 from collections import UserDict
 from datetime import datetime, date
 import re
+import math
+
 
 class Field:
     value: str
-    def __init__(self, value:str):
+
+    def __init__(self, value: str):
         self.value = value
 
     def __str__(self):
@@ -13,14 +16,16 @@ class Field:
     def __repr__(self):
         return str(self.value)
 
+
 class Name(Field):
     def __init__(self, value):
         if value == "":
-             raise ValueError("Ім'я повинно бути заповнене")
+            raise ValueError("Ім'я повинно бути заповнене")
         super().__init__(value)
 
+
 class Phone(Field):
-    __value:str
+    __value: str
 
     def __init__(self, value):
         super().__init__(value)
@@ -37,16 +42,18 @@ class Phone(Field):
         self.__value = value
 
     @classmethod
-    def is_valid(cls, value:str)->bool:
+    def is_valid(cls, value: str) -> bool:
         return len(value) == 10 and value.isdigit()
 
     def __str__(self):
-         return str(self.value)
+        return str(self.value)
+
 
 class Birthday(Field):
     # datetime(1955, 10, 28)
-    __value:str
-    def __init__(self, in_value:str):
+    __value: str
+
+    def __init__(self, in_value: str):
         super().__init__(in_value)
         self.value = in_value
 
@@ -55,7 +62,7 @@ class Birthday(Field):
         return self.__value
 
     @value.setter
-    def value(self, value:str):
+    def value(self, value: str):
         if not self.is_valid(value):
             raise ValueError("День народження повинен бути вказаний в форматі 2022-02-24")
         self.__value: date = datetime.strptime(value, "%Y-%m-%d").date()
@@ -68,51 +75,51 @@ class Birthday(Field):
         return re.match(r"^\d{4}-\d{2}-\d{2}$", value) is not None
 
 
-    # @classmethod
-    # def str_to_datetime(cls, value: str) -> datetime:
-    #     return datetime.strptime(value, "%Y-%m-%d")
-    # def __str__(self):
-
-
 class Record:
-    name:Name
-    phones:list[Phone]
-    birthday:Birthday
+    name: Name
+    phones: list[Phone]
+    birthday: Birthday | None
 
     def __init__(self, args):
         self.name = Name(args[0])
         self.phones = []
-        #self.birthday =
+        self.birthday = None
         if len(args) > 1:
-           loc_add_info_list = args[1:]
-           loc_add_info: str
-           for loc_add_info in loc_add_info_list:
-               if Phone.is_valid(loc_add_info):
-                   self.add_phone(loc_add_info)
-               elif Birthday.is_valid(loc_add_info):
-                   self.birthday = Birthday(loc_add_info)
+            loc_add_info_list = args[1:]
+            loc_add_info: str
+            for loc_add_info in loc_add_info_list:
+                if Phone.is_valid(loc_add_info):
+                    self.add_phone(loc_add_info)
+                elif Birthday.is_valid(loc_add_info):
+                    self.birthday = Birthday(loc_add_info)
+                else:
+                    raise ValueError(
+                        f"Вказане значення '{loc_add_info}' є в невідомому форматі ( формат телефона: '0123456789'; формат дня народження: '2022-02-24' )"
+                    )
 
-
-    def add_phone(self, in_phone:str):
+    def add_phone(self, in_phone: str):
         self.phones.append(Phone(in_phone))
 
-    def find_phone(self, in_phone:str)->Phone|None:
-        return next((p for p in self.phones if p.value == in_phone),None)
+    def find_phone(self, in_phone: str) -> Phone | None:
+        return next((p for p in self.phones if p.value == in_phone), None)
 
-    def remove_phone(self, in_phone:str):
+    def remove_phone(self, in_phone: str):
         loc_found_phone = self.find_phone(in_phone)
         if loc_found_phone:
             self.phones.remove(loc_found_phone)
 
-    def edit_phone(self, old_phone:str,new_phone:str):
+    def edit_phone(self, old_phone: str, new_phone: str):
         loc_found_phone = self.find_phone(old_phone)
         if loc_found_phone:
             loc_found_phone.value = new_phone
 
-    def has_phone(self, in_phone: str)->bool:
+    def has_phone(self, in_phone: str) -> bool:
         return self.find_phone(in_phone) is not None
 
     def days_to_birthday(self) -> int:
+        if self.birthday is None:
+            return 0
+
         today = date.today()
         # Встановлюємо день народження на поточний рік
         next_birthday = self.birthday.value.replace(year=today.year)
@@ -126,7 +133,7 @@ class Record:
         delta = next_birthday - today
         return delta.days
 
-    def __eq__(self, other)->bool:
+    def __eq__(self, other) -> bool:
         if isinstance(other, Record):
             return self.name == other.name
         if isinstance(other, str):
@@ -134,28 +141,32 @@ class Record:
         return False
 
     def __str__(self):
-        if self.birthday is None:
-            lb=""
-        else:
-            lb = f"{self.birthday}"
-        return f"Контакт: {self.name}; телефони: {', '.join(str(p) for p in self.phones)}; День народження: {lb}"
+        lp = ""
+        if len(self.phones) > 0:
+            lp = f"; телефони: {', '.join(str(p) for p in self.phones)}"
+        lb = ""
+        if self.birthday:
+            lb = f"; День народження: {self.birthday}"
+
+        return f"Контакт: {self.name}{lp}{lb}"
+
 
 class AddressBook(UserDict):
-    data:dict[str, Record]
+    data: dict[str, Record]
 
-    def add_record(self, in_record:Record):
+    def add_record(self, in_record: Record):
         self.data[in_record.name.value] = in_record
 
-    def find(self, in_name:str)->Record|None:
-        return next((p for p in self.data.values() if p == in_name),None)
+    def find(self, in_name: str) -> Record | None:
+        return next((p for p in self.data.values() if p == in_name), None)
 
     def delete(self, args):
         self.data.pop(args[0])
 
-    def find_by_phone(self, in_phone:str)->Record|None:
-        return next((p for p in self.data.values() if p.has_phone(in_phone)),None)
+    def find_by_phone(self, in_phone: str) -> Record | None:
+        return next((p for p in self.data.values() if p.has_phone(in_phone)), None)
 
-    def add_contact(self, args)->str:
+    def add_contact(self, args) -> str:
         loc_name = args[0]
         found_rec = self.find(loc_name)
         if found_rec:
@@ -163,12 +174,12 @@ class AddressBook(UserDict):
         self.add_record(Record(args))
         return f"Контакт {loc_name} додано."
 
-    def show_all(self)->str:
+    def show_all(self) -> str:
         if self.data:
             return f"{'\n'.join(str(p) for p in self.data.values())}"
         return "Ше нічого не зробив, а вже дивишся (Книга контактів порожня)."
 
-    def change_contact(self, args)->str:
+    def change_contact(self, args) -> str:
         loc_name, phone_before, phone_after = args
 
         loc_rec = self.find(loc_name)
@@ -178,7 +189,7 @@ class AddressBook(UserDict):
         loc_rec.edit_phone(phone_before, phone_after)
         return f"Контакт {loc_name} змінено."
 
-    def show_phone(self,args) -> str:
+    def show_phone(self, args) -> str:
         loc_phone = args[0]
 
         found_phone_rec = self.find_by_phone(loc_phone)
@@ -186,7 +197,25 @@ class AddressBook(UserDict):
             return f"{found_phone_rec}"
         return f"Контакт по телефону {loc_phone} не знайдено."
 
+    def iterator(self, n=2):
+        # Перетворюємо всі записи книги (значення словника) на список
+        records = list(self.data.values())
 
+        # Рухаємося по списку з кроком N
+        for i in range(0, len(records), n):
+            # Повертаємо зріз від поточного індексу до i + n
+            yield records[i : i + n]
+
+    def show_iterate(self) -> str:
+        if self.data:
+            return_str = ""
+            paginator = self.iterator(2)
+            for part in paginator:
+                return_str = return_str + f"\n--- Нова сторінка (ітерація) ---\n"
+                return_str = return_str + f"{'\n'.join(str(p) for p in part)}"
+
+            return return_str
+        return "Ше нічого не зробив, а вже дивишся (Книга контактів порожня)."
 
 
 # Декоратор для обробки помилок введення
@@ -205,57 +234,84 @@ def input_error(func):
 
     return inner
 
+
 @input_error
-def add_contact(args)->str:
+def add_contact(args) -> str:
     return main_book.add_contact(args)
 
+
 @input_error
-def change_contact(args)->str:
+def change_contact(args) -> str:
     return main_book.change_contact(args)
 
+
 @input_error
-def show_phone(args)->str:
+def show_phone(args) -> str:
     return main_book.show_phone(args)
 
-@input_error
-def show_all(args)->str:
-    return main_book.show_all()
 
 @input_error
-def del_contact(args)->str:
+def show_all(args) -> str:
+    return main_book.show_all()
+
+
+@input_error
+def show_iterate(args) -> str:
+    return main_book.show_iterate()
+
+
+@input_error
+def del_contact(args) -> str:
     main_book.delete(args)
     return "Запис видалено"
 
-def close_command(args)->str:
+
+def close_command(args) -> str:
     return "break"
 
-def hello_command(args)->str:
+
+def hello_command(args) -> str:
     return "How can I help you?"
 
+
 # Парсер команд: розбиває рядок на команду та аргументи
-def parse_input(user_input:str)->tuple|str:
+def parse_input(user_input: str) -> tuple | str:
     command, *args = user_input.split()
     command = command.strip().lower()
 
     if command == "good":
-        if not(len(args) > 0 and args[0].strip().lower() == "bye"):
+        if not (len(args) > 0 and args[0].strip().lower() == "bye"):
             return "Unknown command."
     elif command == "show":
-        if not(len(args) > 0 and args[0].strip().lower() == "all"):
+        if not (len(args) > 0 and args[0].strip().lower() == "all"):
             return "Unknown command."
 
     return command, *args
 
 
-command_dict = {"close": close_command, "exit": close_command, "good": close_command, "hello": hello_command,
-                "add": add_contact,"del": del_contact, "change": change_contact, "phone": show_phone, "show": show_all,}
-
+command_dict = {
+    "close": close_command,
+    "exit": close_command,
+    "good": close_command,
+    "hello": hello_command,
+    "add": add_contact,
+    "del": del_contact,
+    "change": change_contact,
+    "phone": show_phone,
+    "show": show_all,
+    "iterate": show_iterate,
+}
 
 main_book = AddressBook()
+
+
 # Головна функція, що керує циклом запит-відповідь
 def main():
-
     print("Welcome to the assistant bot!")
+
+    main_book.add_record(Record(["John", "1234567890", "2021-01-30"]))
+    main_book.add_record(Record(["Jane", "0000000000"]))
+    main_book.add_record(Record(["kris", "1111111111"]))
 
     while True:
         user_input = input("Enter a command: ")
@@ -275,6 +331,7 @@ def main():
         else:
             print("Unknown command.")
             continue
+
 
 # # Головна функція, що керує циклом запит-відповідь
 # def main():
@@ -320,7 +377,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 # ##```
 # ## Після реалізації ваш код має виконуватися наступним чином:
