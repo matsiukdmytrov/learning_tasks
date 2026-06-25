@@ -2,6 +2,7 @@ from collections import UserDict
 from datetime import datetime, date
 import re
 import math
+from typing import Any, Generator
 
 
 class Field:
@@ -197,24 +198,45 @@ class AddressBook(UserDict):
             return f"{found_phone_rec}"
         return f"Контакт по телефону {loc_phone} не знайдено."
 
-    def iterator(self, n=2):
+    def get_iterator_page(self, iter_len=2, page_num=0) -> Generator[list[Record], Any, None]:
+        records = list(self.data.values())
+
+        for i in range((page_num * iter_len), (page_num * iter_len + iter_len), 1):
+            yield records[i : i + 1]
+        # return records[(page_num * iter_len) : (page_num * iter_len + iter_len)]
+
+    def paginator(self, iter_len=2) -> Generator[list[Record], Any, None]:
         # Перетворюємо всі записи книги (значення словника) на список
         records = list(self.data.values())
 
         # Рухаємося по списку з кроком N
-        for i in range(0, len(records), n):
+        for i in range(0, len(records), iter_len):
             # Повертаємо зріз від поточного індексу до i + n
-            yield records[i : i + n]
+            yield records[i : i + iter_len]
 
     def show_iterate(self) -> str:
         if self.data:
             return_str = ""
-            paginator = self.iterator(2)
+            paginator = self.paginator()
             for part in paginator:
                 return_str = return_str + f"\n--- Нова сторінка (ітерація) ---\n"
                 return_str = return_str + f"{'\n'.join(str(p) for p in part)}"
 
             return return_str
+        return "Ше нічого не зробив, а вже дивишся (Книга контактів порожня)."
+
+    def show_iterator_page(self, args) -> str:
+        # iteratepage
+        if self.data:
+            return_str = ""
+            if len(args) == 1:
+                return_str = return_str + f"\n--- Нова сторінка (ітерація) ---"
+                paginator = self.get_iterator_page(2, int(args[0]))
+                for part in paginator:
+                    return_str = return_str + f"\n{''.join(str(p) for p in part)}"
+                return return_str
+            return "Недостатньо аргументів ( вкажи сторінку ітерації )."
+
         return "Ше нічого не зробив, а вже дивишся (Книга контактів порожня)."
 
 
@@ -261,6 +283,11 @@ def show_iterate(args) -> str:
 
 
 @input_error
+def show_iterator_page(args) -> str:
+    return main_book.show_iterator_page(args)
+
+
+@input_error
 def del_contact(args) -> str:
     main_book.delete(args)
     return "Запис видалено"
@@ -300,6 +327,7 @@ command_dict = {
     "phone": show_phone,
     "show": show_all,
     "iterate": show_iterate,
+    "iteratepage": show_iterator_page,
 }
 
 main_book = AddressBook()
