@@ -94,6 +94,8 @@ class Record:
                     self.add_phone(loc_add_info)
                 elif Birthday.is_valid(loc_add_info):
                     self.birthday = Birthday(loc_add_info)
+                elif str(loc_add_info) == "None":
+                    continue
                 else:
                     raise ValueError(
                         f"Вказане значення '{loc_add_info}' є в невідомому форматі ( формат телефона: '0123456789'; формат дня народження: '2022-02-24' )"
@@ -171,6 +173,9 @@ class AddressBook(UserDict):
 
     def delete(self, args):
         self.data.pop(args[0])
+
+    def delete_all(self):
+        self.data.clear()
 
     def find_by_phone(self, in_phone: str) -> Record | None:
         return next((p for p in self.data.values() if p.has_phone(in_phone)), None)
@@ -340,18 +345,11 @@ class AddressBookDecoder(json.JSONDecoder):
         # We pass our custom object_hook to the base class constructor
         super().__init__(object_hook=self.object_hook, *args, **kwargs)
 
-    def object_hook(self, dct):
-        # Check if this dictionary represents our User class
-        if "id" in dct and "name" in dct and "joined_at" in dct:
-            return User(
-                user_id=dct["id"],
-                name=dct["name"],
-                # Parse the ISO string back into a real datetime object
-                joined_at=datetime.fromisoformat(dct["joined_at"]),
-            )
-
-        # If it doesn't match, return the dict as-is (standard JSON behavior)
-        return dct
+    def object_hook(self, dct) -> Record | None:
+        if "name" in dct and "birthday" in dct and "phones" in dct:
+            return Record([dct["name"], dct["birthday"]] + dct["phones"])
+        # If it doesn't match, return None
+        return None
 
 
 def save_to_file(args):
@@ -362,10 +360,41 @@ def save_to_file(args):
         save_file = dbase_file
     else:
         save_file = args[0]
+
     with open(save_file, "w", encoding="utf-8") as file:
         file.write(json_string)
-    # Десеріалізація назад у словник Python
-    # parsed_data = json.loads(json_string,cls=AddressBookDecoder)
+
+    return "Адресна книга збережена в файл: " + save_file
+
+
+def load_from_file(args):
+    clean_db_before = False
+    if len(args) == 0:
+        load_file = dbase_file
+    elif args[0] == "True":
+        load_file = dbase_file
+        clean_db_before = True
+    else:
+        load_file = args[0]
+
+    if len(args) > 1 and args[1] == "True":
+        clean_db_before = True
+
+    json_string = ""
+    with open(load_file, "r", encoding="utf-8") as file:
+        json_string = file.read()
+
+    if len(json_string) == 0:
+        return "Файл пустий: " + load_file
+
+    if clean_db_before:
+        main_book.delete_all()
+
+    list_rec = json.loads(json_string, cls=AddressBookDecoder)
+    for rec in list_rec:
+        if rec:
+            main_book.add_record(rec)
+    return "Адресна книга завантажена з файлу: " + load_file
 
 
 command_dict = {
@@ -381,6 +410,7 @@ command_dict = {
     "iterate": show_iterate,
     "iteratepage": show_iterator_page,
     "save": save_to_file,
+    "load": load_from_file,
 }
 
 main_book = AddressBook()
@@ -393,9 +423,9 @@ dbase_file = os.getcwd() + "\\db.json"
 def main():
     print("Welcome to the assistant bot!")
 
-    main_book.add_record(Record(["John", "1234567890", "2021-01-30"]))
-    main_book.add_record(Record(["Jane", "0000000000", "5555555555"]))
-    main_book.add_record(Record(["Kris", "1111111111"]))
+    # main_book.add_record(Record(["John", "1234567890", "2021-01-30"]))
+    # main_book.add_record(Record(["Jane", "0000000000", "5555555555"]))
+    # main_book.add_record(Record(["Kris", "1111111111"]))
 
     while True:
         user_input = input("Enter a command: ")
