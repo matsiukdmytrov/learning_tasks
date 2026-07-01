@@ -4,6 +4,7 @@ import re
 from typing import Any, Generator
 import json
 import os
+from pathlib import Path
 
 
 class Field:
@@ -340,6 +341,11 @@ def search(args) -> str:
 
 
 def close_command(args) -> str:
+    dbase_file_path = Path(dbase_file)
+    if dbase_file_path.exists():
+        user_input = input("Found database file.: " + dbase_file + "\n Save Address book in it (y) ?:")
+        if user_input.strip() == "y":
+            save_to_file("")
     return "break"
 
 
@@ -460,6 +466,12 @@ def main():
     # main_book.add_record(Record(["John", "1234567890", "2021-01-30"]))
     # main_book.add_record(Record(["Jane", "0000000000", "5555555555"]))
     # main_book.add_record(Record(["Kris", "1111111111"]))
+
+    dbase_file_path = Path(dbase_file)
+    if dbase_file_path.exists():
+        user_input = input("Found database file.: " + dbase_file + "\n Load Address book from it (y) ?:")
+        if user_input.strip() == "y":
+            load_from_file("")
 
     while True:
         user_input = input("Enter a command: ")
