@@ -161,6 +161,12 @@ class Record:
             "birthday": str(self.birthday),
         }
 
+    def has_part_name(self, in_part_str: str) -> bool:
+        return in_part_str in str(self.name)
+
+    def has_part_phone(self, in_part_str: str) -> bool:
+        return next((p for p in self.phones if in_part_str in str(p.value)), None) is not None
+
 
 class AddressBook(UserDict):
     data: dict[str, Record]
@@ -179,6 +185,11 @@ class AddressBook(UserDict):
 
     def find_by_phone(self, in_phone: str) -> Record | None:
         return next((p for p in self.data.values() if p.has_phone(in_phone)), None)
+
+    def find_by_str(self, in_str: str) -> list[Record]:
+        return [p for p in self.data.values() if p.has_part_name(in_str)] + [
+            p for p in self.data.values() if p.has_part_phone(in_str)
+        ]
 
     def add_contact(self, args) -> str:
         loc_name = args[0]
@@ -252,6 +263,23 @@ class AddressBook(UserDict):
 
         return "Ше нічого не зробив, а вже дивишся (Книга контактів порожня)."
 
+    def search(self, args) -> str:
+        if len(args) == 0:
+            return "Недостатньо аргументів ( рядок пошуку )."
+
+        if len(args) > 1:
+            return "Забагато аргументів ( потрібен ОДИН рядок пошуку )."
+
+        rec_list = self.find_by_str(args[0])
+
+        if len(rec_list) == 0:
+            return "Нічого не знайдено"
+
+        return_str = ""
+        # for rec in rec_list:
+        return_str = return_str + f"{'\n'.join(str(p) for p in rec_list)}"
+        return return_str
+
 
 # Декоратор для обробки помилок введення
 def input_error(func):
@@ -304,6 +332,11 @@ def show_iterator_page(args) -> str:
 def del_contact(args) -> str:
     main_book.delete(args)
     return "Запис видалено"
+
+
+@input_error
+def search(args) -> str:
+    return main_book.search(args)
 
 
 def close_command(args) -> str:
@@ -411,6 +444,7 @@ command_dict = {
     "iteratepage": show_iterator_page,
     "save": save_to_file,
     "load": load_from_file,
+    "search": search,
 }
 
 main_book = AddressBook()
